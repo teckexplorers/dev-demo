@@ -1,0 +1,27 @@
+# Maven
+target/
+*.log
+
+# Sonar / Jenkins generated files
+.scannerwork/
+.sonarqube/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.class
+*.jar
+*.war
+*.ear
