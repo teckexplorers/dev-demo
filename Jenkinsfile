@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'jenkins-slave' }
     
     parameters {
         choice(name: 'ENVIRONMENT', choices: ['Development', 'Staging/UAT', 'Production'], description: 'Select the environment to run the pipeline')
@@ -7,7 +7,7 @@ pipeline {
     }
     
     tools {
-        maven "MAVEN-3.9"   // keep exact name as configured in Jenkins
+        maven "MAVEN-3.9" 
     }
     
     environment {
@@ -15,6 +15,8 @@ pipeline {
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
         SONAR_ORGANIZATION = "teckexplorers"
         SONAR_PROJECTKEY = "teckexplorers_dev-demo"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_NAME = "calc-demo"
     }
 
     stages {
@@ -42,7 +44,7 @@ pipeline {
         
         stage("4. BUILD & TEST") {
             steps {
-                sh 'mvn clean test'
+                sh 'mvn clean verify'
             }
             post {
                 always {
@@ -65,14 +67,24 @@ pipeline {
             }
         }
         
-        stage("6. PACKAGE") {
-            steps {
-                sh 'mvn package -DskipTests'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        stage('7. BUILD IMAGE AND PUSH TO REGISTRY') {
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'DOCKERHUB', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]){
+                    sh '''
+                        echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                        
+                        docker buildx build --push \
+                          -t $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG \
+                          -t $DOCKERHUB_USER/$IMAGE_NAME:latest \
+                          .
+                    '''
                 }
+            }
+        }
+        stage('8. BUILD CLEAN UP') {
+            steps {
+                sh 'echo === Cleaning Up Docker Resources for further builds ==='
+                sh 'docker system prune -af'
             }
         }
     }

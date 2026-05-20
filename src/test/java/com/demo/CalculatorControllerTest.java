@@ -46,4 +46,11 @@ class CalculatorControllerTest {
                 .andExpect(jsonPath("$.operation").value("subtract"))
                 .andExpect(jsonPath("$.result").value(3));
     }
+
+    @Test
+    void healthEndpointShouldReturnUp() throws Exception {
+        mockMvc.perform(get("/api/calculator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
 }
