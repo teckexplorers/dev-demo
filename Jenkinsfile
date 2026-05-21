@@ -23,6 +23,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         IMAGE_NAME = "calc-demo"
         DOCKER_IMAGE = "monsternex007/calc-demo"
+        KUBECONFIG = '/home/ubuntu/.kube/config'
     }
 
     stages {
@@ -110,6 +111,10 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo "Setting up kubectl context for Dev environment..."
+                    kubectl config current-context
+                    kubectl get nodes
+                    
                     echo "Applying Kubernetes manifests..."
                     kubectl apply -f deploy/dev/namespace.yaml
                     kubectl apply -f deploy/dev/deployment.yaml
