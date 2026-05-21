@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calc-demo
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calc-demo
+  template:
+    metadata:
+      labels:
+        app: calc-demo
+    spec:
+      containers:
+        - name: calc-demo
+          image: monsternex007/calc-demo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
