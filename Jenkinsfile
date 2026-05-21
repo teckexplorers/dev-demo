@@ -17,6 +17,7 @@ pipeline {
         SONAR_PROJECTKEY = "teckexplorers_dev-demo"
         IMAGE_TAG = "${BUILD_NUMBER}"
         IMAGE_NAME = "calc-demo"
+        DOCKER_IMAGE = "monsternex007/calc-demo"
     }
 
     stages {
@@ -81,10 +82,43 @@ pipeline {
                 }
             }
         }
+        
         stage('8. BUILD CLEAN UP') {
             steps {
                 sh 'echo === Cleaning Up Docker Resources for further builds ==='
                 sh 'docker system prune -af'
+            }
+        }
+
+        stage('9. Approval for Dev Deployment') {
+            when {
+                expression { return params.DEPLOY_TO_DEV }
+            }
+            steps {
+                input message: 'Approve deployment to Dev?', ok: 'Deploy'
+            }
+        }
+
+        stage('Deploy to Dev') {
+            when {
+                expression { return params.DEPLOY_TO_DEV }
+            }
+            steps {
+                sh '''
+                    echo "Applying Kubernetes manifests..."
+                    kubectl apply -f deploy/dev/namespace.yaml
+                    kubectl apply -f deploy/dev/deployment.yaml
+                    kubectl apply -f deploy/dev/service.yaml
+
+                    echo "Updating deployment image..."
+                    kubectl set image deployment/calc-demo \
+                      calc-demo=${DOCKER_IMAGE}:${IMAGE_TAG} \
+                      -n dev
+
+                    kubectl rollout status deployment/calc-demo -n dev --timeout=120s
+                    kubectl get pods -n dev
+                    kubectl get svc -n dev
+                '''
             }
         }
     }
