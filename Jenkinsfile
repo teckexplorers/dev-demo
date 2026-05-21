@@ -4,6 +4,11 @@ pipeline {
     parameters {
         choice(name: 'ENVIRONMENT', choices: ['Development', 'Staging/UAT', 'Production'], description: 'Select the environment to run the pipeline')
         string(name: 'EXECUTOR_NAME', defaultValue: '', description: 'Enter Your Name Please', trim: true)
+        booleanParam(
+            name: 'DEPLOY_TO_DEV',
+            defaultValue: false,
+            description: 'Deploy to Dev environment?'
+        )
     }
     
     tools {
